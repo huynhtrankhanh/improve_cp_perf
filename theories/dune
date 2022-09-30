@@ -1,0 +1,4 @@
+(coq.theory
+ (name ImproveCPPerf)
+ (package improve_cp_perf)
+ (synopsis "Improve competitive programming performance"))

@@ -1,0 +1,15 @@
+# This is taken from https://github.com/palmskog/coq-program-verification-template
+
+Makefile.coq
+Makefile.coq.conf
+_build
+*~
+*.d
+*.aux
+*.glob
+*.vo
+*.vio
+*.vok
+*.vos
+.lia.cache
+bsearch
