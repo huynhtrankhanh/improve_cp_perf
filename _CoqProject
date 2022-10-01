@@ -1,3 +1,1 @@
--Q ./theories ImproveCPPerf
-theories/one.v
-theories/another.v
+-R ./_build/default/theories ImproveCPPerf
