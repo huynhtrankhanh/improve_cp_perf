@@ -289,9 +289,11 @@ Lemma alternate_balanced_condition_bool_implies_alternate_balanced_condition (l 
   (alternate_balanced_condition_bool l = true) -> open_not_exhausted l.
 Proof.
   intro h.
-  induction l using rev_ind.
-  - intros l' h'.
-    pose proof (prefix_nil_inv _ h').
-    rewrite H. rewrite -> count_close_nil, -> count_open_nil.
-    easy.
-  - unfold open_not_exhausted.
+  unfold open_not_exhausted.
+  intros l' h'.
+  destruct h'.
+  rewrite H in h.
+  unfold alternate_balanced_condition_bool in h.
+  pose proof (alternate_balanced_condition_bool_aux_app l' x 0 0 h).
+  lia.
+Qed.
