@@ -150,6 +150,18 @@ Proof. easy. Qed.
 Lemma count_close_nil : count_close [] = 0.
 Proof. easy. Qed.
 
+Lemma count_open_cons_open (l : list bracket_t) : count_open (open::l) = 1 + count_open l.
+Proof. easy. Qed.
+
+Lemma count_open_cons_close (l : list bracket_t) : count_open (close::l) = count_open l.
+Proof. easy. Qed.
+
+Lemma count_close_cons_open (l : list bracket_t) : count_close (open::l) = count_close l.
+Proof. easy. Qed.
+
+Lemma count_close_cons_close (l : list bracket_t) : count_close (close::l) = 1 + count_close l.
+Proof. easy. Qed.
+
 Equations alternate_balanced_condition_bool_aux (l : list bracket_t) (open_count close_count : nat) : bool :=
 | (open::tl), open_count, close_count :=
     if bool_decide (open_count < close_count) then
@@ -174,14 +186,36 @@ Qed.
 Definition alternate_balanced_condition_bool (l : list bracket_t) :=
   alternate_balanced_condition_bool_aux l 0 0.
 
+Lemma meaning_of_alternate_balanced_condition_bool_aux (l : list bracket_t) (open_count close_count : nat) : (alternate_balanced_condition_bool_aux l open_count close_count = true) -> open_count + count_open l >= close_count + count_close l.
+Proof.
+  revert open_count close_count.
+  induction l.
+  - intros open_count close_count.
+    simp alternate_balanced_condition_bool_aux.
+    intro h.
+    rewrite bool_decide_eq_true in h.
+    rewrite count_open_nil. rewrite count_close_nil.
+    lia.
+  - destruct a.
+    + intros open_count close_count.
+      simp alternate_balanced_condition_bool_aux.
+      intro h.
+      case_bool_decide.
+      * easy.
+      * rewrite count_open_cons_open. rewrite count_close_cons_open.
+        pose proof (IHl (open_count + 1) close_count h).
+        lia.
+    + intros open_count close_count.
+      simp alternate_balanced_condition_bool_aux.
+      intro h.
+      case_bool_decide.
+      * easy.
+      * rewrite count_open_cons_close. rewrite count_close_cons_close.
+        pose proof (IHl open_count (close_count + 1) h).
+        lia.
+Qed.
+
 Lemma alternate_balanced_condition_bool_implies_alternate_balanced_condition (l : list bracket_t) :
   (alternate_balanced_condition_bool l = true) -> open_not_exhausted l.
 Proof.
   intro h.
-  unfold alternate_balanced_condition_bool in h.
-  unfold open_not_exhausted.
-  induction l.
-  - intros l' h'.
-    rewrite (prefix_nil_inv l' h').
-    vm_compute. easy.
-  -
