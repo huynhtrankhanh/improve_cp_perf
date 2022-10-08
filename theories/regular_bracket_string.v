@@ -239,6 +239,52 @@ Proof.
         lia.
 Qed.
 
+Lemma alternate_balanced_condition_bool_aux_app (l1 l2 : list bracket_t) (initial_open_count initial_close_count : nat) : (alternate_balanced_condition_bool_aux (l1 ++ l2) initial_open_count initial_close_count = true) -> initial_open_count >= initial_close_count /\ initial_open_count + count_open l1 >= initial_close_count + count_close l1 /\ (alternate_balanced_condition_bool_aux l2 (initial_open_count + count_open l1) (initial_close_count + count_close l1) = true).
+Proof.
+  revert l2 initial_open_count initial_close_count.
+  induction l1.
+  - intros l2 initial_open_count initial_close_count h.
+    rewrite -> count_open_nil, -> count_close_nil.
+    split.
+    + simpl in h. exact (second_meaning_of_alternate_balanced_condition_bool_aux _ _ _ h).
+    + split.
+      * rewrite -> Nat.add_0_r, -> Nat.add_0_r. simpl in h. exact (second_meaning_of_alternate_balanced_condition_bool_aux _ _ _ h).
+      * simpl in h.
+        rewrite -> Nat.add_0_r, -> Nat.add_0_r.
+        assumption.
+  - intros l2 initial_open_count initial_close_count h.
+    simpl in h. split.
+    + pose proof (second_meaning_of_alternate_balanced_condition_bool_aux _ _ _ h).
+      assumption.
+    + split.
+      * destruct a.
+        { rewrite -> count_open_cons_open, -> count_close_cons_open.
+          simp alternate_balanced_condition_bool_aux in h.
+          case_bool_decide.
+          - easy.
+          - pose proof (meaning_of_alternate_balanced_condition_bool_aux _ _ _ h).
+            pose proof (IHl1 _ _ _ h). lia. }
+        { rewrite -> count_open_cons_close, -> count_close_cons_close.
+          simp alternate_balanced_condition_bool_aux in h.
+          case_bool_decide.
+          - easy.
+          - pose proof (meaning_of_alternate_balanced_condition_bool_aux _ _ _ h).
+            pose proof (IHl1 _ _ _ h). lia. }
+      * destruct a.
+        { rewrite -> count_open_cons_open, -> count_close_cons_open.
+          simp alternate_balanced_condition_bool_aux in h.
+          case_bool_decide.
+          - easy.
+          - pose proof (IHl1 _ _ _ h). rewrite Nat.add_assoc.
+            easy. }
+        { rewrite -> count_open_cons_close, -> count_close_cons_close.
+          simp alternate_balanced_condition_bool_aux in h.
+          case_bool_decide.
+          - easy.
+          - pose proof (IHl1 _ _ _ h). rewrite Nat.add_assoc.
+            easy. }
+Qed.
+
 Lemma alternate_balanced_condition_bool_implies_alternate_balanced_condition (l : list bracket_t) :
   (alternate_balanced_condition_bool l = true) -> open_not_exhausted l.
 Proof.
