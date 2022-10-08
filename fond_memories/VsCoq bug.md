@@ -1,3 +1,4 @@
+```coq
 Require Import Lia.
 Require Import stdpp.list.
 Require Import Coq.Program.Equality.
@@ -219,25 +220,25 @@ Lemma second_meaning_of_alternate_balanced_condition_bool_aux (l : list bracket_
 Proof.
   revert open_count close_count.
   induction l.
-  - intros open_count close_count.
+  (*-*) intros open_count close_count.
     simp alternate_balanced_condition_bool_aux.
     rewrite bool_decide_eq_true.
     lia.
-  - intros open_count close_count.
+  (*-*) intros open_count close_count.
     destruct a.
-    + simp alternate_balanced_condition_bool_aux.
+    (*+*) simp alternate_balanced_condition_bool_aux.
       case_bool_decide.
-      * easy.
-      * intro h.
-        pose proof (IHl _ _ h).
+      (**) easy.
+      (**) assert (h' : open_count + 1 >= close_count).
+        { apply (IHl (open_count + 1) close_count). }
         lia.
-    + simp alternate_balanced_condition_bool_aux.
+    (*+*) simp alternate_balanced_condition_bool_aux.
       case_bool_decide.
-      * easy.
-      * intro h.
-        pose proof (IHl _ _ h).
+      (**) easy.
+      (**) assert (h' : open_count >= close_count + 1).
+        { apply (IHl open_count (close_count + 1)). }
         lia.
-Qed.
+  (* BUG HERE *)
 
 Lemma alternate_balanced_condition_bool_implies_alternate_balanced_condition (l : list bracket_t) :
   (alternate_balanced_condition_bool l = true) -> open_not_exhausted l.
@@ -249,3 +250,10 @@ Proof.
     rewrite H. rewrite -> count_close_nil, -> count_open_nil.
     easy.
   - unfold open_not_exhausted.
+```
+
+When I place the cursor before the `BUG HERE` comment and run Interpret to Cursor, I get this error in the goal window:
+
+```
+TypeError: Cannot read properties of null (reading 'before')
+```
