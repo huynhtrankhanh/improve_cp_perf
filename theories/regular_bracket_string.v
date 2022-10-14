@@ -8,7 +8,7 @@ Inductive bracket_t :=
   | close.
 
 Inductive balanced : list bracket_t -> Prop :=
-Require
+  | empty : balanced []
   | wrap {x : list bracket_t} : balanced x -> balanced ([open] ++ x ++ [close])
   | join {x y : list bracket_t} : balanced x -> balanced y -> balanced (x ++ y).
 
