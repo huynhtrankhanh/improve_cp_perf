@@ -285,19 +285,6 @@ Proof.
             easy. }
 Qed.
 
-Lemma alternate_balanced_condition_bool_implies_alternate_balanced_condition (l : list bracket_t) :
-  (alternate_balanced_condition_bool l = true) -> open_not_exhausted l.
-Proof.
-  intro h.
-  unfold open_not_exhausted.
-  intros l' h'.
-  destruct h'.
-  rewrite H in h.
-  unfold alternate_balanced_condition_bool in h.
-  pose proof (alternate_balanced_condition_bool_aux_app l' x 0 0 h).
-  lia.
-Qed.
-
 Definition alternate_balanced_condition_aux (l : list bracket_t) (open_count close_count : nat) := open_count + count_open l = close_count + count_close l /\ forall l', prefix l' l -> close_count + count_close l' <= open_count + count_open l'.
 
 Lemma always_fail_if_close_count_exceeds_open_count (l : list bracket_t) (open_count close_count : nat) (h : open_count < close_count) : ~ alternate_balanced_condition_aux l open_count close_count.
@@ -354,4 +341,47 @@ Proof.
     * intros l' h'. destruct l'.
       { rewrite -> count_open_nil, -> count_close_nil. lia. }
       { pose proof prefix_cons_inv_1 _ _ _ _ h'. rewrite H. rewrite -> count_open_cons_close, -> count_close_cons_close. pose proof (h2 l' (prefix_cons_inv_2 _ _ _ _ h')). lia. }
+Qed.
+
+Lemma prop_analog_equivalent (l : list bracket_t) (open_count close_count : nat) : alternate_balanced_condition_aux l open_count close_count <-> (alternate_balanced_condition_bool_aux l open_count close_count = true).
+Proof.
+  revert open_count close_count.
+  induction l.
+  - intros open_count close_count. unfold alternate_balanced_condition_aux. rewrite -> count_open_nil, -> count_close_nil.
+    split.
+    + intro h. destruct h as [h1 h2]. rewrite Nat.add_0_r, Nat.add_0_r in h1.
+      simp alternate_balanced_condition_bool_aux. rewrite bool_decide_eq_true. assumption.
+    + intro h. simp alternate_balanced_condition_bool_aux in h. rewrite bool_decide_eq_true in h. rewrite Nat.add_0_r, Nat.add_0_r. split.
+      * assumption.
+      * intros l' h'. rewrite (prefix_nil_inv _ h'). rewrite count_close_nil, count_open_nil. lia.
+  - intros open_count close_count. destruct a.
+    + simp alternate_balanced_condition_bool_aux.
+      case_bool_decide.
+      * unfold alternate_balanced_condition_aux. split.
+        { intro h. destruct h as [_ h]. pose proof (h [] ltac:(apply prefix_nil)). rewrite count_close_nil, count_open_nil in H0. lia. }
+        { intro h. easy. }
+      * assert (H1 : close_count <= open_count). { lia. }
+        rewrite (cons_open_recurse l _ _ H1). exact (IHl _ _).
+    + simp alternate_balanced_condition_bool_aux.
+      case_bool_decide.
+      * unfold alternate_balanced_condition_aux. split.
+        { intro h. destruct h as [_ h]. pose proof (h [] ltac:(apply prefix_nil)). rewrite count_close_nil, count_open_nil in H0. lia. }
+        { intro h. easy. }
+      * assert (H1 : close_count <= open_count). { lia. }
+        rewrite (cons_close_recurse l _ _ H1). exact (IHl _ _).
+Qed.
+
+Lemma alternate_balanced_condition_aux_initialized_to_zero (l : list bracket_t) : alternate_balanced_condition_aux l 0 0 <-> alternate_balanced_condition l.
+Proof.
+  unfold alternate_balanced_condition. unfold alternate_balanced_condition_aux.
+  easy.
+Qed.
+
+Lemma alternate_balanced_condition_bool_iff_alternate_balanced_condition (l : list bracket_t) :
+  (alternate_balanced_condition_bool l = true) <-> alternate_balanced_condition l.
+Proof.
+  rewrite <- alternate_balanced_condition_aux_initialized_to_zero.
+  unfold alternate_balanced_condition_bool.
+  rewrite prop_analog_equivalent.
+  reflexivity.
 Qed.
