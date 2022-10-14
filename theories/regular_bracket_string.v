@@ -8,7 +8,7 @@ Inductive bracket_t :=
   | close.
 
 Inductive balanced : list bracket_t -> Prop :=
-  | empty: balanced []
+Require
   | wrap {x : list bracket_t} : balanced x -> balanced ([open] ++ x ++ [close])
   | join {x y : list bracket_t} : balanced x -> balanced y -> balanced (x ++ y).
 
@@ -296,4 +296,62 @@ Proof.
   unfold alternate_balanced_condition_bool in h.
   pose proof (alternate_balanced_condition_bool_aux_app l' x 0 0 h).
   lia.
+Qed.
+
+Definition alternate_balanced_condition_aux (l : list bracket_t) (open_count close_count : nat) := open_count + count_open l = close_count + count_close l /\ forall l', prefix l' l -> close_count + count_close l' <= open_count + count_open l'.
+
+Lemma always_fail_if_close_count_exceeds_open_count (l : list bracket_t) (open_count close_count : nat) (h : open_count < close_count) : ~ alternate_balanced_condition_aux l open_count close_count.
+Proof.
+  unfold alternate_balanced_condition_aux.
+  intro h1.
+  destruct h1 as [_ h1].
+  epose proof h1 [] ltac:(apply prefix_nil).
+  rewrite -> count_close_nil, -> count_open_nil in H.
+  lia.
+Qed.
+
+Lemma base_case (open_count close_count : nat) : open_count = close_count <-> alternate_balanced_condition_aux [] open_count close_count.
+Proof.
+  split.
+  - intro h. unfold alternate_balanced_condition_aux.
+    rewrite -> count_open_nil, -> count_close_nil.
+    split.
+    + lia.
+    + intros l' h'. pose proof prefix_nil_inv _ h'.
+      rewrite -> H, -> count_close_nil, -> count_open_nil. lia.
+  - intro h. unfold alternate_balanced_condition_aux in h.
+    rewrite -> count_open_nil, -> count_close_nil in h. lia.
+Qed.
+
+Lemma cons_open_recurse (l : list bracket_t) (open_count close_count : nat) (h : close_count <= open_count) : alternate_balanced_condition_aux (open::l) open_count close_count <-> alternate_balanced_condition_aux l (open_count + 1) close_count.
+Proof.
+  split.
+  - intro h'. unfold alternate_balanced_condition_aux. unfold alternate_balanced_condition_aux in h'. rewrite -> count_open_cons_open, -> count_close_cons_open in h'. destruct h' as [h1 h2]. split.
+    * lia.
+    * intros l' h3.
+      epose proof h2 (open::l') ltac:(shelve).
+      rewrite -> count_close_cons_open, -> count_open_cons_open in H. lia.
+  - unfold alternate_balanced_condition_aux. intro h'. destruct h' as [h1 h2]. rewrite -> count_open_cons_open, -> count_close_cons_open. split.
+    * lia.
+    * intros l' h'. destruct l'.
+      { rewrite -> count_open_nil, -> count_close_nil. lia. }
+      { pose proof prefix_cons_inv_1 _ _ _ _ h'. rewrite H. rewrite -> count_open_cons_open, -> count_close_cons_open. pose proof prefix_cons_inv_2 _ _ _ _ h'.  pose proof (h2 _ H0). lia. }
+  Unshelve.
+  apply prefix_cons. auto.
+Qed.
+
+Lemma cons_close_recurse (l : list bracket_t) (open_count close_count : nat) (h : close_count <= open_count) : alternate_balanced_condition_aux (close::l) open_count close_count <-> alternate_balanced_condition_aux l open_count (close_count + 1).
+Proof.
+  unfold alternate_balanced_condition_aux.
+  split.
+  - intro h'. destruct h' as [h1 h2]. rewrite -> count_open_cons_close, -> count_close_cons_close in h1. split.
+    * lia.
+    * intros l' h3.
+      epose proof h2 (close::l') ltac:(apply prefix_cons; auto).
+      rewrite -> count_close_cons_close, -> count_open_cons_close in H. lia.
+  - intro h'. destruct h' as [h1 h2]. rewrite -> count_open_cons_close, -> count_close_cons_close. split.
+    * lia.
+    * intros l' h'. destruct l'.
+      { rewrite -> count_open_nil, -> count_close_nil. lia. }
+      { pose proof prefix_cons_inv_1 _ _ _ _ h'. rewrite H. rewrite -> count_open_cons_close, -> count_close_cons_close. pose proof (h2 l' (prefix_cons_inv_2 _ _ _ _ h')). lia. }
 Qed.
