@@ -2,6 +2,7 @@ Require Import Lia.
 Require Import stdpp.list.
 Require Import Coq.Program.Equality.
 From Equations Require Import Equations.
+From Hammer Require Import Hammer.
 
 Inductive bracket_t :=
   | open
@@ -384,4 +385,42 @@ Proof.
   unfold alternate_balanced_condition_bool.
   rewrite prop_analog_equivalent.
   reflexivity.
+Qed.
+
+Lemma prefix_of_cases {A : Type} (l l' : list A) (a : A) : l' `prefix_of` l ++ [a] -> l' `prefix_of` l \/ l' = l ++ [a].
+Proof.
+  intro h.
+  unfold prefix in h.
+  destruct h.
+  induction x using rev_ind.
+  - right. rewrite app_nil_r in H. auto.
+  - left. unfold prefix. exists x0. rewrite app_assoc in H. pose proof (app_inj_tail _ _ _ _ H). tauto.
+Qed.
+
+Lemma prefix_app_cases {A : Type} (l x y : list A) (h : l `prefix_of` x ++ y) : l `prefix_of` x \/ exists l', l = x ++ l'.
+Proof.
+  induction y using rev_ind.
+  - left. rewrite app_nil_r in h. tauto.
+  - rewrite app_assoc in h. pose proof (prefix_of_cases _ _ _ h). destruct H.
+    * tauto.
+    * rewrite H. right. exists (y ++ [x0]). rewrite app_assoc. easy.
+Qed.
+
+Lemma balanced_implies_alternate_balanced_condition (l : list bracket_t) (h : balanced l) : alternate_balanced_condition l.
+Proof.
+  induction h.
+  - rewrite <- alternate_balanced_condition_bool_iff_alternate_balanced_condition. vm_compute. easy.
+  - unfold alternate_balanced_condition. unfold alternate_balanced_condition in IHh.
+    split.
+    + repeat rewrite count_open_sum, count_close_sum. repeat rewrite count_open_single_close, count_open_single_open, count_close_single_close, count_close_single_open. lia.
+    + intros l' h'. destruct l'.
+      * repeat rewrite count_close_nil, count_open_nil. lia.
+      * simpl in h'. pose proof (prefix_cons_inv_1 _ _ _ _ h'). rewrite H. repeat rewrite count_close_cons_open, count_open_cons_open. pose proof (prefix_cons_inv_2 _ _ _ _ h'). pose proof (prefix_of_cases _ _ _ H0). destruct H1.
+        { destruct IHh. pose proof (H3 _ H1). lia. }
+        { rewrite H1. rewrite count_close_sum, count_open_sum, count_close_single_close, count_open_single_close. lia. }
+  - unfold alternate_balanced_condition in *. split.
+    + rewrite count_open_sum, count_close_sum. lia.
+    + intros l' h. pose proof (prefix_app_cases _ _ _ h). destruct H.
+      * destruct IHh1 as [_ h3]. apply h3. tauto.
+      * destruct H as [w h3]. rewrite h3. rewrite count_close_sum, count_open_sum. rewrite h3 in h. pose proof (prefix_app_inv _ _ _ h). destruct IHh2 as [_ h4]. pose proof (h4 _ H). lia.
 Qed.
