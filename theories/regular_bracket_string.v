@@ -424,3 +424,6 @@ Proof.
       * destruct IHh1 as [_ h3]. apply h3. tauto.
       * destruct H as [w h3]. rewrite h3. rewrite count_close_sum, count_open_sum. rewrite h3 in h. pose proof (prefix_app_inv _ _ _ h). destruct IHh2 as [_ h4]. pose proof (h4 _ H). lia.
 Qed.
+
+Lemma alternate_balanced_condition_implies_balanced (l : list bracket_t) (h : alternate_balanced_condition l) : balanced l.
+Admitted.
